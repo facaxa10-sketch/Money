@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Gestione economica personale: entrate, uscite, budget, grafici e risparmio. I dati restano sul tuo dispositivo." />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Gestione Economica</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar / navigazione -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-logo">💰</span>
+        <span class="brand-name">Gestione<br>Economica</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard"><span>📊</span> Dashboard</button>
+        <button class="nav-item" data-view="transactions"><span>💳</span> Movimenti</button>
+        <button class="nav-item" data-view="budget"><span>🎯</span> Budget</button>
+        <button class="nav-item" data-view="reports"><span>📈</span> Analisi</button>
+        <button class="nav-item" data-view="settings"><span>⚙️</span> Impostazioni</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="themeToggle" class="theme-toggle" title="Cambia tema">🌙 Tema</button>
+      </div>
+    </aside>
+
+    <!-- Contenuto principale -->
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+        <div class="month-picker">
+          <button id="prevMonth" aria-label="Mese precedente">‹</button>
+          <span id="currentMonthLabel">—</span>
+          <button id="nextMonth" aria-label="Mese successivo">›</button>
+        </div>
+        <button class="btn btn-primary add-btn" id="openAddBtn">＋ Aggiungi</button>
+      </header>
+
+      <div class="content">
+        <!-- DASHBOARD -->
+        <section class="view active" id="view-dashboard">
+          <h1 class="view-title">Dashboard</h1>
+          <div class="cards">
+            <div class="card card-balance">
+              <span class="card-label">Saldo totale</span>
+              <span class="card-value" id="statBalance">€ 0,00</span>
+              <span class="card-sub" id="statBalanceSub">patrimonio complessivo</span>
+            </div>
+            <div class="card card-income">
+              <span class="card-label">Entrate del mese</span>
+              <span class="card-value" id="statIncome">€ 0,00</span>
+              <span class="card-sub">↑ in ingresso</span>
+            </div>
+            <div class="card card-expense">
+              <span class="card-label">Uscite del mese</span>
+              <span class="card-value" id="statExpense">€ 0,00</span>
+              <span class="card-sub">↓ in uscita</span>
+            </div>
+            <div class="card card-savings">
+              <span class="card-label">Risparmio del mese</span>
+              <span class="card-value" id="statSavings">€ 0,00</span>
+              <span class="card-sub" id="statSavingsRate">0% delle entrate</span>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Uscite per categoria</h2>
+              </div>
+              <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+              <div class="empty-hint" id="categoryEmpty">Nessuna uscita registrata questo mese.</div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Andamento ultimi 6 mesi</h2>
+              </div>
+              <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Ultimi movimenti</h2>
+              <button class="link-btn" data-view="transactions">Vedi tutti →</button>
+            </div>
+            <ul class="tx-list" id="recentList"></ul>
+            <div class="empty-hint" id="recentEmpty">Ancora nessun movimento. Aggiungi il primo con il pulsante “＋ Aggiungi”.</div>
+          </div>
+        </section>
+
+        <!-- MOVIMENTI -->
+        <section class="view" id="view-transactions">
+          <h1 class="view-title">Movimenti</h1>
+          <div class="panel">
+            <div class="filters">
+              <input type="search" id="searchTx" placeholder="🔎 Cerca per descrizione o categoria…" />
+              <select id="filterType">
+                <option value="all">Tutti i tipi</option>
+                <option value="income">Solo entrate</option>
+                <option value="expense">Solo uscite</option>
+              </select>
+              <select id="filterCategory"><option value="all">Tutte le categorie</option></select>
+            </div>
+            <ul class="tx-list" id="txList"></ul>
+            <div class="empty-hint" id="txEmpty">Nessun movimento per i filtri selezionati.</div>
+          </div>
+        </section>
+
+        <!-- BUDGET -->
+        <section class="view" id="view-budget">
+          <h1 class="view-title">Budget mensile</h1>
+          <div class="panel">
+            <p class="panel-desc">Imposta un limite di spesa per ciascuna categoria. Le barre mostrano quanto hai speso questo mese.</p>
+            <div class="budget-list" id="budgetList"></div>
+          </div>
+        </section>
+
+        <!-- ANALISI -->
+        <section class="view" id="view-reports">
+          <h1 class="view-title">Analisi</h1>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head"><h2>Entrate vs Uscite (6 mesi)</h2></div>
+              <div class="chart-wrap"><canvas id="ioChart"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Ripartizione entrate</h2></div>
+              <div class="chart-wrap"><canvas id="incomeChart"></canvas></div>
+              <div class="empty-hint" id="incomeEmpty">Nessuna entrata registrata questo mese.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Riepilogo del mese</h2></div>
+            <div class="summary-grid" id="summaryGrid"></div>
+          </div>
+        </section>
+
+        <!-- IMPOSTAZIONI -->
+        <section class="view" id="view-settings">
+          <h1 class="view-title">Impostazioni</h1>
+          <div class="panel">
+            <div class="panel-head"><h2>Categorie</h2></div>
+            <p class="panel-desc">Gestisci le categorie usate per classificare i movimenti.</p>
+            <div class="cat-editor">
+              <h3>Uscite</h3>
+              <div class="chips" id="expenseCats"></div>
+              <div class="add-cat">
+                <input type="text" id="newExpenseCat" placeholder="Nuova categoria di uscita" />
+                <button class="btn" id="addExpenseCat">Aggiungi</button>
+              </div>
+            </div>
+            <div class="cat-editor">
+              <h3>Entrate</h3>
+              <div class="chips" id="incomeCats"></div>
+              <div class="add-cat">
+                <input type="text" id="newIncomeCat" placeholder="Nuova categoria di entrata" />
+                <button class="btn" id="addIncomeCat">Aggiungi</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Dati</h2></div>
+            <p class="panel-desc">I tuoi dati sono salvati solo su questo dispositivo (nel browser). Esportali per farne una copia di sicurezza.</p>
+            <div class="btn-row">
+              <button class="btn" id="exportJson">⬇️ Esporta backup (JSON)</button>
+              <button class="btn" id="exportCsv">⬇️ Esporta movimenti (CSV)</button>
+              <label class="btn" for="importFile">⬆️ Importa backup</label>
+              <input type="file" id="importFile" accept="application/json" hidden />
+              <button class="btn btn-danger" id="resetData">🗑️ Cancella tutto</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Overlay sidebar mobile -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- MODALE aggiungi/modifica movimento -->
+  <div class="modal" id="txModal" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="modalTitle">Nuovo movimento</h2>
+        <button class="close-btn" id="closeModal" aria-label="Chiudi">✕</button>
+      </div>
+      <form id="txForm">
+        <input type="hidden" id="txId" />
+        <div class="type-switch">
+          <label class="type-opt type-expense">
+            <input type="radio" name="txType" value="expense" checked /> <span>Uscita</span>
+          </label>
+          <label class="type-opt type-income">
+            <input type="radio" name="txType" value="income" /> <span>Entrata</span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="txAmount">Importo (€)</label>
+          <input type="number" id="txAmount" step="0.01" min="0" inputmode="decimal" required placeholder="0,00" />
+        </div>
+        <div class="field">
+          <label for="txCategory">Categoria</label>
+          <select id="txCategory" required></select>
+        </div>
+        <div class="field">
+          <label for="txDesc">Descrizione</label>
+          <input type="text" id="txDesc" placeholder="Es. Spesa supermercato" />
+        </div>
+        <div class="field">
+          <label for="txDate">Data</label>
+          <input type="date" id="txDate" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="cancelModal">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
